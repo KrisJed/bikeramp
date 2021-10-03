@@ -6,12 +6,13 @@ import { GeoPosition } from 'geo-position.ts';
 
 import { CreateTripDto } from './dto/CreateTripDto';
 import { Trip, TripDocument } from './schemas/Trip';
+import { GetTripsByRangeDto } from './dto/GetTripsByRangeDto';
 
 @Injectable()
 export class TripService {
   constructor(
     @InjectModel(Trip.name) private readonly tripModel: Model<TripDocument>,
-  ) {}
+  ) { }
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
     const { start_address, destination_address } = createTripDto;
@@ -27,6 +28,19 @@ export class TripService {
     });
 
     return createdTrip.save();
+  }
+
+  async getTripsByRange(dateRanges: GetTripsByRangeDto): Promise<Trip[]> {
+    const { startDate, endDate } = dateRanges;
+
+    return this.tripModel
+      .find({
+        date: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      })
+      .sort({ date: 1 });
   }
 
   private async calculateDistance(
