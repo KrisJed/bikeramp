@@ -1,17 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as nodeGeocoder from 'node-geocoder';
+import nodeGeocoder from 'node-geocoder';
 import { GeoPosition } from 'geo-position.ts';
+import { ConfigService } from '@nestjs/config';
 
 import { CreateTripDto } from './dto/CreateTripDto';
 import { Trip, TripDocument } from './schemas/Trip';
 import { GetTripsByRangeDto } from './dto/GetTripsByRangeDto';
+import { LoggerService } from 'src/common/logger/logger.service';
+import { UnitsConfig } from 'src/config/application.interface';
 
 @Injectable()
 export class TripService {
   constructor(
     @InjectModel(Trip.name) private readonly tripModel: Model<TripDocument>,
+    private readonly logger: LoggerService,
+    private readonly configService: ConfigService,
   ) { }
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
@@ -27,7 +32,15 @@ export class TripService {
       distance,
     });
 
-    return createdTrip.save();
+    await createdTrip.save();
+
+    const { distance: distanceUnit } = this.configService.get<UnitsConfig>('units');
+
+    this.logger.log(
+      `New trip from ${start_address} to ${destination_address} created. Distance: ${distance}${distanceUnit}`,
+    );
+
+    return createdTrip;
   }
 
   async getTripsByRange(dateRanges: GetTripsByRangeDto): Promise<Trip[]> {
@@ -46,7 +59,7 @@ export class TripService {
   private async calculateDistance(
     startAddress: string,
     destinationAddress: string,
-  ): Promise<string> {
+  ): Promise<number> {
     const geocoder = nodeGeocoder({ provider: 'openstreetmap' });
 
     const startAddressData = await geocoder.geocode(startAddress);
@@ -63,6 +76,8 @@ export class TripService {
       destinationLongitude,
     );
 
-    return startPosition.Distance(destinationPosition).toFixed(0);
+    return (
+      Number(startPosition.Distance(destinationPosition).toFixed(0)) / 1000
+    );
   }
 }

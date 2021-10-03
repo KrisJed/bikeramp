@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+
 import { DateService } from 'src/common/date/date.service';
 import { UnitsConfig } from 'src/config/application.interface';
-
 import { Trip } from '../trip/schemas/Trip';
 import { DayStats, WeeklyStats } from './stats.interfaces';
 
@@ -17,16 +17,16 @@ export class StatsService {
     const { totalDistance, totalPrice } =
       this.countTripsTotalDistanceAndPrice(trips);
 
-    const { currency, distance } = this.configService.get<UnitsConfig>('units');
+    const { currency, distance: distanceUnit } = this.configService.get<UnitsConfig>('units');
 
     return {
-      total_distance: `${totalDistance}${distance}`,
+      total_distance: `${totalDistance}${distanceUnit}`,
       total_price: `${totalPrice}${currency}`,
     };
   }
 
   countMonthlyStats(trips: Trip[]): DayStats[] {
-    const { currency, distance } = this.configService.get<UnitsConfig>('units');
+    const { currency, distance: distanceUnit } = this.configService.get<UnitsConfig>('units');
 
     const activeDays: number[] = [];
     for (const trip of trips) {
@@ -53,8 +53,8 @@ export class StatsService {
           currentDayTrips[0].date,
           'MMMM, Do',
         ),
-        total_distance: totalDistance.toString(),
-        avg_ride: `${totalDistance / currentDayTrips.length}${distance}`,
+        total_distance: `${totalDistance}${distanceUnit}`,
+        avg_ride: `${totalDistance / currentDayTrips.length}${distanceUnit}`,
         avg_price: `${totalPrice / currentDayTrips.length}${currency}`,
       });
     }
