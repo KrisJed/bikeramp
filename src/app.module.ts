@@ -6,6 +6,7 @@ import { TripModule } from './api/trip/trip.module';
 import { StatsModule } from './api/stats/stats.module';
 import { CommonModule } from './common/common.module';
 import appConfig from './config/application';
+import { HttpModule } from './api/http/http.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import appConfig from './config/application';
     ConfigModule.forRoot({
       load: [appConfig],
     }),
+    HttpModule,
   ],
   controllers: [],
   providers: [],

@@ -2,14 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import nodeGeocoder from 'node-geocoder';
-import { GeoPosition } from 'geo-position.ts';
 import { ConfigService } from '@nestjs/config';
 
 import { CreateTripDto } from './dto/CreateTripDto';
 import { Trip, TripDocument } from './schemas/Trip';
 import { GetTripsByRangeDto } from './dto/GetTripsByRangeDto';
 import { LoggerService } from 'src/common/logger/logger.service';
-import { UnitsConfig } from 'src/config/application.interface';
+import { UnitsConfig, UrlsConfig } from 'src/config/application.interface';
+import { HttpService } from '../http/http.service';
+import { RoutingApiResponseData } from './trip.interfaces';
 
 @Injectable()
 export class TripService {
@@ -17,6 +18,7 @@ export class TripService {
     @InjectModel(Trip.name) private readonly tripModel: Model<TripDocument>,
     private readonly logger: LoggerService,
     private readonly configService: ConfigService,
+    private readonly httpService: HttpService,
   ) { }
 
   async create(createTripDto: CreateTripDto): Promise<Trip> {
@@ -70,14 +72,14 @@ export class TripService {
     const { latitude: destinationLatitude, longitude: destinationLongitude } =
       destinationAddressData[0];
 
-    const startPosition = new GeoPosition(startLatitude, startLongitude);
-    const destinationPosition = new GeoPosition(
-      destinationLatitude,
-      destinationLongitude,
-    );
+    const endpointString = `${startLongitude},${startLatitude};${destinationLongitude},${destinationLatitude}`;
 
-    return (
-      Number(startPosition.Distance(destinationPosition).toFixed(0)) / 1000
-    );
+    const { routeApiUrl } = this.configService.get<UrlsConfig>('urls');
+
+    const directionsData = await (<Promise<RoutingApiResponseData>>(
+      this.httpService.getRequest(`${routeApiUrl}/${endpointString}`)
+    ));
+
+    return directionsData.routes[0].distance / 1000;
   }
 }

@@ -7,7 +7,12 @@ export interface UnitsConfig {
   distance: string;
 }
 
+export interface UrlsConfig {
+  routeApiUrl: string;
+}
+
 export interface AppConfig {
   db: DbConfig;
   units: UnitsConfig;
+  urls: UrlsConfig;
 }

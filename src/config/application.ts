@@ -7,5 +7,8 @@ export default function () {
       currency: 'PLN',
       distance: 'km',
     },
+    urls: {
+      routeApiUrl: process.env.ROUTE_API_URL,
+    },
   };
 }
