@@ -1,9 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+
 import { DateService } from 'src/common/date/date.service';
 import { TripService } from '../trip/trip.service';
 import { DayStats, WeeklyStats } from './stats.interfaces';
 import { StatsService } from './stats.service';
 
+@ApiTags('stats')
 @Controller('stats')
 export class StatsController {
   constructor(
@@ -12,6 +15,8 @@ export class StatsController {
     private readonly dateService: DateService,
   ) { }
 
+  @ApiOperation({ summary: 'Get weekly trips stats' })
+  @ApiResponse({ status: 200, description: 'OK', type: WeeklyStats })
   @Get('weekly')
   async getWeeklyStats(): Promise<WeeklyStats> {
     const weekRanges = this.dateService.getCurrentRange('week');
@@ -21,6 +26,13 @@ export class StatsController {
     return this.statsService.countWeeklyStats(thisWeekTrips);
   }
 
+  @ApiOperation({ summary: 'Get monthly trips stats' })
+  @ApiResponse({
+    status: 200,
+    description: 'OK',
+    type: DayStats,
+    isArray: true,
+  })
   @Get('monthly')
   async getMonthlyStats(): Promise<DayStats[]> {
     const monthRanges = this.dateService.getCurrentRange('month');
